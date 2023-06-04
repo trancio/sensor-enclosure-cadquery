@@ -12,5 +12,13 @@ A customizable enclosure for sensor PCB. Especially for IoT devices, sensors. Th
 - Lid with 2/4 holes for socket or flat head screws
 - Optional enclosure mounting tab on lid
 
+
+**Usage**
+
+- Install the [CadQuery and the CQ-Editor](https://cadquery.readthedocs.io/en/latest/installation.html)
+- Create a TOML configuration file or modify the esp12f_sensor.toml file
+- Edit the configuration file name at the beginning of sensor_enclosure.py
+
+
 ![](Box-001.jpg)
 ![](Box-002.jpg)
