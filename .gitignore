@@ -1,0 +1,5 @@
+*.gcode
+*.stl
+*.png
+*.jpg
+__pycache/
