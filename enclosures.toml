@@ -33,7 +33,7 @@ top_perforation = true
 x_side_perforation = true
 y_side_perforation = true
 vent_hole_diameter = 3.0
-grid_density = 0.60
+grid_density = 0.50
 
 [esp12f_sensor.circular_connector]
 circular = true

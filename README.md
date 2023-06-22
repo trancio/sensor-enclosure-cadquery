@@ -1,6 +1,6 @@
 # Sensor enclosure
 
-A customizable enclosure for sensor PCB. Especially for IoT devices, sensors. The dimensions of the box depend on the parameters of the PCB
+A customizable enclosure for sensor PCB. Especially for IoT devices, sensors. The dimensions of the box depend on the parameters of the PCB.
 
 ![](enclosure.png)
 
