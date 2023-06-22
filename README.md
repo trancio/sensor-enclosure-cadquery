@@ -16,9 +16,9 @@ A customizable enclosure for sensor PCB. Especially for IoT devices, sensors. Th
 **Usage**
 
 - Install the [CadQuery and the CQ-Editor](https://cadquery.readthedocs.io/en/latest/installation.html)
-- Create a TOML configuration file or modify the esp12f_sensor.toml file
-- Edit the configuration file name at the beginning of sensor_enclosure.py
+- Add your configuration to the enclosures.toml file.
+- Edit the selected_enclosure variable's value at the beginning of sensor_enclosure.py
 
 
-![](Box-001.jpg)
-![](Box-002.jpg)
+![](enclosure-01.png)
+![](enclosure-02.png)

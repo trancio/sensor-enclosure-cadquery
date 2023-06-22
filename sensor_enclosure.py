@@ -1,26 +1,40 @@
 #!/usr/bin/env python3
+""" Enclousere for PCB
 
-import cadquery as cq
+The dimensions of the enclusure depend on the
+parameters of the PCB
+
+Optional features:
+   - mount tabs
+   - ventilation holes
+   - holes (rectangular, circular, sensor)
+"""
+
 import tomllib
-
-#################################################
-# Enclousere for PCB created with CadQuery
-#
-# The dimensions of the enclusure depend on the
-# parameters of the PCB
-#
-# Optional features:
-#   - mount tabs
-#   - ventilation holes
-#   - holes for rectangular (rectangular, circular, sensor)
-#################################################
+import sys
+import cadquery as cq
 
 #############
 # Parameters
 #############
 
-with open('esp12f_sensor.toml', 'rb') as f:
-    config = tomllib.load(f)
+CONFIG_FILE = 'enclosures.toml'
+SELECTED_ENCLOSURE = 'esp12f_sensor'
+
+with open(CONFIG_FILE, 'rb') as f:
+    try:
+        config = tomllib.load(f)[SELECTED_ENCLOSURE]
+    except tomllib.TOMLDecodeError as e:
+        if __name__ == '__main__':
+            # Write error message to terminal
+            print(f'Invalid TOML configuration in {CONFIG_FILE}')
+            print(e)
+            sys.exit(1)
+        else:
+            # Write error message to log viewer pane of ca-editor
+            log(f'Invalid TOML configuration in {CONFIG_FILE}')
+            log(e)
+
 general_config = config['box']
 perforation_config = config['perforation']
 circular_config = config['circular_connector']
@@ -55,29 +69,33 @@ gap_z = general_config['gap_z']
 top_perforation = perforation_config['top_perforation']
 x_side_perforation = perforation_config['x_side_perforation']
 y_side_perforation = perforation_config['y_side_perforation']
-vent_hole_diameter = perforation_config['vent_hole_diameter']
-grid_density = perforation_config['grid_density']
+if top_perforation or x_side_perforation or y_side_perforation:
+    vent_hole_diameter = perforation_config['vent_hole_diameter']
+    grid_density = perforation_config['grid_density']
 
 # Circular connector
 circular = circular_config['circular']
-circular_diameter = circular_config['diameter']
-circular_from_pcb_plane = circular_config['from_pcb_plane']
-circular_from_pcb_corner = circular_config['from_pcb_corner']
-circular_faces = circular_config['faces']
+if circular:
+    circular_diameter = circular_config['diameter']
+    circular_from_pcb_plane = circular_config['from_pcb_plane']
+    circular_from_pcb_corner = circular_config['from_pcb_corner']
+    circular_faces = circular_config['faces']
 
 # Rectangular connector
 rectangular = rectangular_config['rectangular']
-rectangular_height = rectangular_config['height']
-rectangular_width = rectangular_config['width']
-rectangular_from_pcb = rectangular_config['from_pcb']
-rectangular_from_pcb_corner = rectangular_config['from_pcb_corner']
-rectangular_faces = rectangular_config['faces']
+if rectangular:
+    rectangular_height = rectangular_config['height']
+    rectangular_width = rectangular_config['width']
+    rectangular_from_pcb = rectangular_config['from_pcb']
+    rectangular_from_pcb_corner = rectangular_config['from_pcb_corner']
+    rectangular_faces = rectangular_config['faces']
 
 # Circular hole at top
 sensor = sensor_config['sensor']
-sensor_hole_diameter = sensor_config['hole_diameter']
-sensor_distance_from_y_edge = sensor_config['distance_from_x_edge']
-sensor_distance_from_x_edge = sensor_config['distance_from_y_edge']
+if sensor:
+    sensor_hole_diameter = sensor_config['hole_diameter']
+    sensor_distance_from_y_edge = sensor_config['distance_from_x_edge']
+    sensor_distance_from_x_edge = sensor_config['distance_from_y_edge']
 
 # Lid
 lid_bolt_head = lid_config['head']
@@ -90,7 +108,8 @@ bolts_mirror = lid_config['mirror']
 
 # Mounting
 mounts = mounting_config['mounts']
-mount_bolt_diameter = mounting_config['bolt_diameter']
+if mounts:
+    mount_bolt_diameter = mounting_config['bolt_diameter']
 
 #######################
 # Calculated parameters
@@ -109,11 +128,10 @@ inner_width = width - 2 * wall
 x_forbidden_zone = gap_x + pcb_hole_corner_dist + pcb_hole_diameter
 y_forbidden_zone = gap_y + pcb_hole_corner_dist + pcb_hole_diameter
 z_forbidden_zone = pcb_lid_dist + gap_z + pcb_thick
-max_density = 0.55
+MAX_DENSITY = 0.50
 min_density = 1 / ((inner_depth - z_forbidden_zone) / vent_hole_diameter)
-print(min_density)
 grid_density = max(grid_density, min_density)
-grid_density = min(grid_density, max_density)
+grid_density = min(grid_density, MAX_DENSITY)
 if rounding_radius >= wall:
     rounding_radius = wall - 0.01
 
@@ -123,6 +141,8 @@ if rounding_radius >= wall:
 
 
 def lid_base():
+    """Create base plate w/wo mounting tabs"""
+
     mount_tab_width = 5 * mount_bolt_diameter
     lid_thickness = lid_bolt_head_length
     points = [(0, -width / 2), (length / 2, -width / 2)]
@@ -132,56 +152,101 @@ def lid_base():
                    ((length + mount_tab_width) / 2, mount_tab_width / 2),
                    (length / 2, mount_tab_width / 2)]
     points += [(length / 2, width / 2), (0, width / 2)]
-    r = cq.Workplane('front')
-    r = r.polyline(points).close()
+    base = cq.Workplane('front')
+    base = base.polyline(points).close()
     if mounts:
-        r = r.moveTo(
+        base = base.moveTo(
             (length + mount_tab_width) / 2 - 1.2 * mount_bolt_diameter, 0)
-        r = r.rect(mount_bolt_diameter,
-                   mount_tab_width - 2 * mount_bolt_diameter)
-    r = r.mirrorY()
-    r = r.extrude(lid_thickness)
-    return r
+        base = base.rect(mount_bolt_diameter,
+                         mount_tab_width - 2 * mount_bolt_diameter)
+    base = base.mirrorY()
+    base = base.extrude(lid_thickness)
+    return base
 
 
-def lid_bolts(r):
-    r = r.faces('<Z').workplane()
+def lid_bolts(base):
+    """Add bolt-holes to base plate
+
+    Parameters
+    ----------
+    base : base plate object
+
+    Returns
+    -------
+    base : base plate object with holes
+    """
+
+    base = base.faces('<Z').workplane()
     hole_pos = [length - 2 * x_padding, width - 2 * y_padding]
     if bolts_nr == 2:
         if bolts_mirror:
-            r = r.pushPoints([(hole_pos[0] / 2, -hole_pos[1] / 2),
-                              (-hole_pos[0] / 2, hole_pos[1] / 2)])
+            base = base.pushPoints([(hole_pos[0] / 2, -hole_pos[1] / 2),
+                                    (-hole_pos[0] / 2, hole_pos[1] / 2)])
         else:
-            r = r.pushPoints([(hole_pos[0] / 2, hole_pos[1] / 2),
-                              (-hole_pos[0] / 2, -hole_pos[1] / 2)])
+            base = base.pushPoints([(hole_pos[0] / 2, hole_pos[1] / 2),
+                                    (-hole_pos[0] / 2, -hole_pos[1] / 2)])
     else:
-        r = r.rect(hole_pos[0], hole_pos[1], forConstruction=True)
-        r = r.vertices()
-    r = r.cboreHole(lid_bolt_diameter, lid_bolt_head_diameter,
-                    lid_bolt_head_length)
-    return r
+        base = base.rect(hole_pos[0], hole_pos[1], forConstruction=True)
+        base = base.vertices()
+    base = base.cboreHole(lid_bolt_diameter, lid_bolt_head_diameter,
+                          lid_bolt_head_length)
+    return base
 
 
 def lid():
-    r = lid_base()
-    r = r.faces('>Z').rect(length - 2 * wall, width - 2 * wall)
-    r = r.rect(length - 2 * (x_padding - tolerance),
-               width - 2 * (x_padding - tolerance))
-    r = r.extrude(pcb_lid_dist - gap_z)
+    """Create lid with bolt-holes, w/wo mounting tabs"""
+
+    base = lid_base()
+    base = base.faces('>Z').rect(length - 2 * wall, width - 2 * wall)
+    base = base.rect(length - 2 * (x_padding - tolerance),
+                     width - 2 * (x_padding - tolerance))
+    base = base.extrude(pcb_lid_dist - gap_z)
     if rounding_vertical_edges:
-        r = r.edges('|Z').fillet(rounding_radius)
-    r = lid_bolts(r)
-    return r
+        base = base.edges('|Z').fillet(rounding_radius)
+    base = lid_bolts(base)
+    return base
 
 
-def grid_params(length, width):
+def grid_params(s_length, s_width):
+    """Calculate grid parameters
+
+    Parameters
+    ----------
+    s_length : float
+        Length of side or top
+    s_width : float
+        Width of side or top
+
+    Returns
+    -------
+    distance : float
+        Distance of the ventilation holes
+    l_count : float
+        The number of holes in longitudinal direction
+    w_count : float
+        The number fo holes in the other direction
+    """
+
     distance = vent_hole_diameter / grid_density
-    l_count = int(length / distance)
-    w_count = int(width / distance)
+    l_count = int(s_length / distance)
+    w_count = int(s_width / distance)
     return distance, l_count, w_count
 
 
 def perf(box, face):
+    """Perforate the enclosure
+
+    Parameters
+    ----------
+    box : enclosure object
+    face : string
+        The side to be perforated
+
+    Returns
+    -------
+    box : perforated enclosure object
+    """
+
     if face == '>X':
         distance, l_count, w_count = grid_params(
             inner_width - y_forbidden_zone, inner_depth - z_forbidden_zone)
@@ -205,6 +270,17 @@ def perf(box, face):
 
 
 def screw_posts(box):
+    """Create screw posts in the enclosure
+
+    Parameters
+    ----------
+    box : enclosure object
+
+    Returs
+    ------
+    box : enclosure obect with screw posts
+    """
+
     screw_post_length = inner_depth - pcb_lid_dist - pcb_thick - gap_z
     box = box.faces('<Z').workplane(wall, True)
     if bolts_nr == 4:
@@ -231,6 +307,20 @@ def screw_posts(box):
 
 
 def get_aux_parameters(faces):
+    """Calculate auxiliary parameters for perforation
+
+    Parameteres
+    -----------
+    faces : face of the enclosure object
+
+    Returns
+    -------
+    aux_gap : float
+        Gap between holes
+    aux_length : float
+        Length of the perforation area
+    """
+
     if 'Y' in faces:
         aux_gap = gap_y
         aux_length = inner_length
@@ -241,6 +331,17 @@ def get_aux_parameters(faces):
 
 
 def circular_hole(box):
+    """Create circular hole on side
+
+    Parameters
+    ----------
+    box : enclosure object
+
+    Return
+    ------
+    box : enclosure object with circular hole
+    """
+
     circular_dist = circular_from_pcb_plane + pcb_thick + gap_z + pcb_lid_dist
     aux_gap, aux_length = get_aux_parameters(circular_faces)
     x_origin = aux_length / 2 - aux_gap - circular_from_pcb_corner
@@ -250,11 +351,22 @@ def circular_hole(box):
     box = box.circle(circular_diameter / 2 + wall).extrude(-wall)
     box = box.faces(circular_faces).workplane(centerOption='CenterOfBoundBox')
     box = box.moveTo(x_origin, y_origin)
-    box = box.hole(sensor_hole_diameter, depth=wall)
+    box = box.hole(circular_diameter, depth=wall)
     return box
 
 
 def rectangular_hole(box):
+    """Create rectangular hole on side
+
+    Parameters
+    ----------
+    box : enclosure object
+
+    Return
+    ------
+    box : enclosure object with rectangular hole
+    """
+
     rectangular_dist = rectangular_from_pcb + pcb_thick + gap_z + pcb_lid_dist
     aux_gap, aux_length = get_aux_parameters(rectangular_faces)
     x_origin = -aux_length / 2 + aux_gap + rectangular_from_pcb_corner
@@ -273,6 +385,17 @@ def rectangular_hole(box):
 
 
 def sensor_hole(box):
+    """Create sensor hole on top
+
+    Parameters
+    ----------
+    box : enclosure object
+
+    Return
+    ------
+    box : enclosure object with circular hole on top
+    """
+
     x_origin = inner_length / 2 - sensor_distance_from_x_edge - gap_x
     y_origin = -inner_width / 2 + sensor_distance_from_y_edge + gap_y
     box = box.faces('<Z').workplane(centerOption='CenterOfBoundBox')
@@ -284,7 +407,15 @@ def sensor_hole(box):
     return box
 
 
-def box():
+def enclosure():
+    """Create enclosure
+
+    Returns
+    -------
+    box : enclosure object
+
+    """
+
     o_shell = cq.Workplane('front')
     o_shell = o_shell.rect(length, width).extrude(depth)
     if rounding_vertical_edges:
@@ -312,11 +443,11 @@ def box():
 
 
 if __name__ == '__main__':
-    cq.exporters.export(lid(), 'lid.stl')
-    cq.exporters.export(box(), 'box.stl')
+    cq.exporters.export(lid(), f'{SELECTED_ENCLOSURE}-lid.stl')
+    cq.exporters.export(enclosure(), f'{SELECTED_ENCLOSURE}-box.stl')
 else:
     assy = cq.Assembly()
-    assy.add(box(),
+    assy.add(enclosure(),
              name='box',
              loc=cq.Location(cq.Vector(0, 0, 0)),
              color=cq.Color('yellow'))
@@ -324,4 +455,4 @@ else:
              name='lid',
              loc=cq.Location(cq.Vector(0, pcb_width + 10, 0)),
              color=cq.Color('green'))
-    show_object(assy, name='enclosure')
+    show_object(assy, name=f'{SELECTED_ENCLOSURE}-enclosure')
