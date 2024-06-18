@@ -19,7 +19,8 @@ import cadquery as cq
 #############
 
 CONFIG_FILE = 'enclosures.toml'
-SELECTED_ENCLOSURE = 'wemos_d1_mini_sensor'
+#SELECTED_ENCLOSURE = 'wemos_d1_mini_sensor'
+SELECTED_ENCLOSURE = 'esp12f_sensor'
 
 with open(CONFIG_FILE, 'rb') as f:
     try:
@@ -163,7 +164,7 @@ def lid_base():
     base = base.mirrorY()
     base = base.extrude(lid_thickness)
     if rounding_cover_bottom_edges:
-        base = base.edges('<Z').fillet(rounding_radius)
+        base = base.edges('<Z').fillet(rounding_radius - 0.5)
     return base
 
 
