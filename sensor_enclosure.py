@@ -19,8 +19,8 @@ import cadquery as cq
 #############
 
 CONFIG_FILE = 'enclosures.toml'
-#SELECTED_ENCLOSURE = 'wemos_d1_mini_sensor'
-SELECTED_ENCLOSURE = 'esp12f_sensor'
+SELECTED_ENCLOSURE = 'wemos_d1_mini_sensor'
+# SELECTED_ENCLOSURE = 'esp12f_sensor'
 
 with open(CONFIG_FILE, 'rb') as f:
     try:
@@ -61,6 +61,7 @@ rounding_vertical_edges = general_config['rounding_vertical_edges']
 rounding_top_edges = general_config['rounding_top_edges']
 rounding_cover_bottom_edges = general_config['rounding_cover_bottom_edges']
 rounding_radius = general_config['rounding_radius']
+
 # Gaps between PCB and box
 gap_x = general_config['gap_x']
 gap_y = general_config['gap_y']
@@ -126,6 +127,7 @@ width = pcb_width + 2 * aux_y_padding  # outer width
 depth = inner_depth + wall  # outher depth
 inner_length = length - 2 * wall
 inner_width = width - 2 * wall
+
 # for perforation
 x_forbidden_zone = gap_x + pcb_hole_corner_dist + pcb_hole_diameter
 y_forbidden_zone = gap_y + pcb_hole_corner_dist + pcb_hole_diameter
@@ -134,8 +136,15 @@ MAX_DENSITY = 0.50
 min_density = 1 / ((inner_depth - z_forbidden_zone) / vent_hole_diameter)
 grid_density = max(grid_density, min_density)
 grid_density = min(grid_density, MAX_DENSITY)
+
+# rounding
 if rounding_radius >= wall:
     rounding_radius = wall - 0.01
+cover_rounding_radius = rounding_radius
+if rounding_cover_bottom_edges:
+    if cover_rounding_radius >= lid_bolt_head_length / 2:
+        cover_rounding_radius = lid_bolt_head_length / 2 - 0.01
+
 
 ##########
 # Objects
@@ -145,10 +154,10 @@ if rounding_radius >= wall:
 def lid_base():
     """Create base plate w/wo mounting tabs"""
 
-    mount_tab_width = 5 * mount_bolt_diameter
     lid_thickness = lid_bolt_head_length
     points = [(0, -width / 2), (length / 2, -width / 2)]
     if mounts:
+        mount_tab_width = 5 * mount_bolt_diameter
         points += [(length / 2, -mount_tab_width / 2),
                    ((length + mount_tab_width) / 2, -mount_tab_width / 2),
                    ((length + mount_tab_width) / 2, mount_tab_width / 2),
@@ -156,15 +165,21 @@ def lid_base():
     points += [(length / 2, width / 2), (0, width / 2)]
     base = cq.Workplane('front')
     base = base.polyline(points).close()
-    if mounts:
-        base = base.moveTo(
-            (length + mount_tab_width) / 2 - 1.2 * mount_bolt_diameter, 0)
-        base = base.rect(mount_bolt_diameter,
-                         mount_tab_width - 2 * mount_bolt_diameter)
     base = base.mirrorY()
     base = base.extrude(lid_thickness)
     if rounding_cover_bottom_edges:
-        base = base.edges('<Z').fillet(rounding_radius - 0.5)
+        base = base.edges('<Z').fillet(cover_rounding_radius)
+
+    if mounts:
+        mount_tab_width = 5 * mount_bolt_diameter
+        tab_hole = cq.Workplane('front')
+        tab_hole = tab_hole.moveTo(
+            (length + mount_tab_width) / 2 - 1.2 * mount_bolt_diameter, 0)
+        tab_hole = tab_hole.rect(mount_bolt_diameter,
+                                 mount_tab_width - 2 * mount_bolt_diameter)
+        tab_hole = tab_hole.mirrorY().extrude(lid_thickness)
+        base = base.cut(tab_hole)
+
     return base
 
 
