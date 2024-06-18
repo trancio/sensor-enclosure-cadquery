@@ -1,4 +1,2 @@
 *.gcode
-*.png
-*.jpg
 __pycache/

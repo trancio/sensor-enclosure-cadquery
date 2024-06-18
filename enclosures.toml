@@ -10,65 +10,6 @@
 #   - holes for connectors (rectangular, circular, sensor)
 #######################################################
 
-# enclosure for esp12f_sensor
-[esp12f_sensor.box]
-pcb_length = 58.42
-pcb_width = 33.02
-pcb_thick = 1.6
-pcb_hole_diameter = 3.5
-pcb_hole_corner_dist = 5
-pcb_lid_dist = 2.0
-inner_depth = 19.0
-wall = 1.2
-rounding_vertical_edges = true
-rounding_top_edges = false
-rounding_radius = 1.5
-gap_x = 0.2              # Gaps between PCB and box
-gap_y = 0.2
-gap_z = 0.2             # Gap between PCB and lid
-tolerance = 0.20        # To reduces the size of the lid
-
-[esp12f_sensor.perforation]
-top_perforation = true
-x_side_perforation = true
-y_side_perforation = true
-vent_hole_diameter = 3.0
-grid_density = 0.50
-
-[esp12f_sensor.circular_connector]
-circular = true
-diameter = 10.0
-from_pcb_plane = 6.5    # distance of center from PCB plane
-from_pcb_corner = 10.0  # distance from bottom left corner of PCB
-faces = '>X'            # '>X'|'<X'|'>Y'|'<Y'
-
-[esp12f_sensor.rectangular_connector]
-rectangular = false
-height = 13.0
-width = 7.0
-from_pcb = 10.5         # center line distance form PCB
-from_pcb_corner = 20    # distance from bottom left corner of PCB
-faces = '<Y'            # '>X' | '<X' | '>Y' | '<Y'
-
-[esp12f_sensor.sensor_hole_at_top]
-sensor = true
-hole_diameter = 10.0
-distance_from_y_edge = 7.5
-distance_from_x_edge = 12.5
-
-[esp12f_sensor.lid_bolt]
-head = 'socket'         # 'socket' | 'flat'
-bolt_diameter = 2.7
-head_diameter = 5.5
-head_length = 2.0
-nr = 2                  # 2 | 4
-mirror = true
-
-[esp12f_sensor.mounting]
-mounts = true
-bolt_diameter = 3.0
-
-
 # test enclosure
 [test.box]
 pcb_length = 58.42
@@ -80,7 +21,8 @@ pcb_lid_dist = 2.0
 inner_depth = 19.0
 wall = 1.2
 rounding_vertical_edges = true
-rounding_top_edges = false
+rounding_top_edges = true
+rounding_cover_bottom_edges = true
 rounding_radius = 1.5
 gap_x = 0.2              # Gaps between PCB and box
 gap_y = 0.2
@@ -124,5 +66,125 @@ nr = 2                  # 2 | 4
 mirror = true
 
 [test.mounting]
+mounts = true
+bolt_diameter = 3.0
+
+
+# enclosure for esp12f_sensor
+[esp12f_sensor.box]
+pcb_length = 58.42
+pcb_width = 33.02
+pcb_thick = 1.6
+pcb_hole_diameter = 3.5
+pcb_hole_corner_dist = 5
+pcb_lid_dist = 2.0
+inner_depth = 19.0
+wall = 1.2
+rounding_vertical_edges = true
+rounding_top_edges = true
+rounding_cover_bottom_edges = true
+rounding_radius = 1.5
+gap_x = 0.2              # Gaps between PCB and box
+gap_y = 0.2
+gap_z = 0.2             # Gap between PCB and lid
+tolerance = 0.20        # To reduces the size of the lid
+
+[esp12f_sensor.perforation]
+top_perforation = true
+x_side_perforation = true
+y_side_perforation = true
+vent_hole_diameter = 4.0
+grid_density = 0.50
+
+[esp12f_sensor.circular_connector]
+circular = false
+diameter = 10.0
+from_pcb_plane = 6.5    # distance of center from PCB plane
+from_pcb_corner = 10.0  # distance from bottom left corner of PCB
+faces = '>X'            # '>X'|'<X'|'>Y'|'<Y'
+
+[esp12f_sensor.rectangular_connector]
+rectangular = false
+height = 13.0
+width = 7.0
+from_pcb = 10.5         # center line distance form PCB
+from_pcb_corner = 20.0  # distance from bottom left corner of PCB
+faces = '<Y'            # '>X' | '<X' | '>Y' | '<Y'
+
+[esp12f_sensor.sensor_hole_at_top]
+sensor = true
+hole_diameter = 10.0
+distance_from_y_edge = 12.5
+distance_from_x_edge = 7.5
+
+[esp12f_sensor.lid_bolt]
+head = 'socket'         # 'socket' | 'flat'
+bolt_diameter = 2.7
+head_diameter = 5.5
+head_length = 2.5
+nr = 2                  # 2 | 4
+mirror = true
+
+[esp12f_sensor.mounting]
+mounts = true
+bolt_diameter = 3.0
+
+
+# enclosure for Wemos D1 mini sensor
+[wemos_d1_mini_sensor.box]
+pcb_length = 76.00
+pcb_width = 38.00
+pcb_thick = 1.6
+pcb_hole_diameter = 3.0
+pcb_hole_corner_dist = 3.5
+pcb_lid_dist = 2.0
+inner_depth = 21.0
+wall = 1.2
+rounding_vertical_edges = true
+rounding_top_edges = true
+rounding_cover_bottom_edges = true
+rounding_radius = 1.5
+gap_x = 0.2              # Gaps between PCB and box
+gap_y = 1.5
+gap_z = 0.2             # Gap between PCB and lid
+tolerance = 0.20        # To reduces the size of the lid
+
+[wemos_d1_mini_sensor.perforation]
+top_perforation = true
+x_side_perforation = true
+y_side_perforation = true
+vent_hole_diameter = 4.0
+grid_density = 0.50
+
+[wemos_d1_mini_sensor.circular_connector]
+circular = true
+diameter = 10.0
+from_pcb_plane = 7.5    # distance of center from PCB plane
+from_pcb_corner = 47.0  # distance from bottom left corner of PCB
+faces = '<Y'            # '>X'|'<X'|'>Y'|'<Y'
+
+[wemos_d1_mini_sensor.rectangular_connector]
+rectangular = true
+height = 13.0
+width = 7.0
+from_pcb = 10.5         # center line distance form PCB
+from_pcb_corner = 54    # distance from bottom left corner of PCB
+faces = '<Y'            # '>X' | '<X' | '>Y' | '<Y'
+
+[wemos_d1_mini_sensor.sensor_hole_at_top]
+sensor = true
+hole_diameter = 10.0
+distance_from_y_edge = 68.0
+distance_from_x_edge = 27.0
+
+[wemos_d1_mini_sensor.lid_bolt]
+head = 'socket'         # 'socket' | 'flat'
+bolt_diameter = 2.7
+head_diameter = 5.5
+head_length = 2.7
+nr = 4                  # 2 | 4
+mirror = true
+
+[wemos_d1_mini_sensor.mounting]
 mounts = true
 bolt_diameter = 3.0

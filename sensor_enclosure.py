@@ -19,7 +19,7 @@ import cadquery as cq
 #############
 
 CONFIG_FILE = 'enclosures.toml'
-SELECTED_ENCLOSURE = 'esp12f_sensor'
+SELECTED_ENCLOSURE = 'wemos_d1_mini_sensor'
 
 with open(CONFIG_FILE, 'rb') as f:
     try:
@@ -58,6 +58,7 @@ inner_depth = general_config['inner_depth']
 wall = general_config['wall']
 rounding_vertical_edges = general_config['rounding_vertical_edges']
 rounding_top_edges = general_config['rounding_top_edges']
+rounding_cover_bottom_edges = general_config['rounding_cover_bottom_edges']
 rounding_radius = general_config['rounding_radius']
 # Gaps between PCB and box
 gap_x = general_config['gap_x']
@@ -161,6 +162,8 @@ def lid_base():
                          mount_tab_width - 2 * mount_bolt_diameter)
     base = base.mirrorY()
     base = base.extrude(lid_thickness)
+    if rounding_cover_bottom_edges:
+        base = base.edges('<Z').fillet(rounding_radius)
     return base
 
 
@@ -201,8 +204,6 @@ def lid():
     base = base.rect(length - 2 * (x_padding - tolerance),
                      width - 2 * (x_padding - tolerance))
     base = base.extrude(pcb_lid_dist - gap_z)
-    if rounding_vertical_edges:
-        base = base.edges('|Z').fillet(rounding_radius)
     base = lid_bolts(base)
     return base
 
